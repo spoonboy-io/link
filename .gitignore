@@ -1,2 +1,8 @@
 /.idea
 .DS_Store
+certs/
+templates/
+internal/approval/approval_test.go
+internal/approval/misc.go
+config.env
+approvals.yaml
