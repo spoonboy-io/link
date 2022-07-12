@@ -4,7 +4,7 @@ import "time"
 
 const (
 	// config
-	APP_CONFIG   = "config.env"
+	APP_CONFIG      = "config.env"
 	APPROVAL_CONFIG = "approvals.yaml"
 
 	// server
@@ -19,6 +19,5 @@ const (
 	TLS_ORG       = "Spoon Boy"
 	TLS_VALID_FOR = 365 * 24 * time.Hour
 )
-
 
 var DefaultTemplate string = `Template here TODO`
