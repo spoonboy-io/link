@@ -45,7 +45,7 @@ func removeTestYamlFile(t *testing.T) {
 	}
 }
 
-func makeTestTemplate(t *testing.T) {
+func writeTestTemplateFile(t *testing.T) {
 	templatesPath := filepath.Join(".", internal.TEMPLATE_FOLDER)
 	if err := os.MkdirAll(templatesPath, os.ModePerm); err != nil {
 		t.Fatal("Problem checking/creating test template folder", err)
@@ -59,7 +59,7 @@ func makeTestTemplate(t *testing.T) {
 	}
 }
 
-func removeTestTemplate(t *testing.T) {
+func removeTestTemplateFile(t *testing.T) {
 	templatesPath := filepath.Join(".", internal.TEMPLATE_FOLDER)
 	if err := os.RemoveAll(templatesPath); err != nil {
 		t.Fatal("Problem removing template folder", err)
@@ -67,7 +67,6 @@ func removeTestTemplate(t *testing.T) {
 }
 
 func TestReadAndParseConfig(t *testing.T) {
-	// write test yaml config
 	writeTestYamlFile(t)
 
 	wantConfig := ApprovalsConfig{
@@ -104,13 +103,11 @@ func TestReadAndParseConfig(t *testing.T) {
 		t.Errorf("\n\nWanted\n%v\n, \n\ngot \n%v\n", wantConfig, gotConfig)
 	}
 
-	// clean up
 	removeTestYamlFile(t)
 }
 
 func TestValidateConfig(t *testing.T) {
-
-	makeTestTemplate(t)
+	writeTestTemplateFile(t)
 
 	testCases := []struct {
 		name    string
@@ -123,28 +120,126 @@ func TestValidateConfig(t *testing.T) {
 				{
 					ApprovalConfig{
 						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
 						OnProvision:   true,
 						RecipientList: []string{"test@test.com"},
-						TemplateFile:  "test.html",
+						Scope: Scope{
+							Group: "All Clouds",
+						},
 					},
 				},
 			},
 			wantErr: nil,
 		},
+		{
+			name: "no action (provision, delete, reconfigure) specified, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
+						OnProvision:   false,
+						OnDelete:      false,
+						OnReconfigure: false,
+						RecipientList: []string{"test@test.com"},
+						Scope: Scope{
+							Group: "All Clouds",
+						},
+					},
+				},
+			},
+			wantErr: ERR_NO_ACTION,
+		},
+		{
+			name: "no description, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "",
+						TemplateFile:  "test.html",
+						OnProvision:   true,
+						RecipientList: []string{"test@test.com"},
+						Scope: Scope{
+							Group: "All Clouds",
+						},
+					},
+				},
+			},
+			wantErr: ERR_NO_DESCRIPTION,
+		},
+		{
+			name: "template file not exist, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "fileNotExist.html",
+						OnProvision:   true,
+						RecipientList: []string{"test@test.com"},
+						Scope: Scope{
+							Group: "All Clouds",
+						},
+					},
+				},
+			},
+			wantErr: ERR_TEMPLATE_NOT_EXIST,
+		},
+		{
+			name: "no recipients, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
+						OnProvision:   true,
+						RecipientList: []string{},
+						Scope: Scope{
+							Group: "All Clouds",
+						},
+					},
+				},
+			},
+			wantErr: ERR_NO_RECIPIENTS,
+		},
+		{
+			name: "bad recipient email address, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
+						OnProvision:   true,
+						RecipientList: []string{"badaddress&xyz.com"},
+						Scope: Scope{
+							Group: "All Clouds",
+						},
+					},
+				},
+			},
+			wantErr: ERR_BAD_RECIPIENT_EMAIL,
+		},
+		{
+			name: "multiple scopes, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
+						OnProvision:   true,
+						RecipientList: []string{"test@test.com"},
+						Scope: Scope{
+							Group: "All Clouds",
+							Cloud: "Azure",
+						},
+					},
+				},
+			},
+			wantErr: ERR_MULTIPLE_SCOPES,
+		},
 	}
 
-	/*
-		OnDelete       bool     `yaml:"onDelete"`
-		OnReconfigure  bool     `yaml:"onReconfigure"`
-		LinkedApproval bool     `yaml:"linkedApproval"`
-		RecipientList  []string `yaml:"recipientList"`
-		Scope          Scope    `yaml:"scope"`
-	*/
-
 	for _, tc := range testCases {
-
 		t.Run(tc.name, func(t *testing.T) {
-			// set the package config
 			config = tc.config
 			gotErr := ValidateConfig()
 			if gotErr != tc.wantErr {
@@ -153,5 +248,5 @@ func TestValidateConfig(t *testing.T) {
 		})
 	}
 
-	removeTestTemplate(t)
+	removeTestTemplateFile(t)
 }

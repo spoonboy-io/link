@@ -23,19 +23,8 @@ var (
 	ERR_NO_ACTION           = errors.New("Approval is not configured for 'provision', 'delete' nor 'reconfigure'")
 	ERR_NO_RECIPIENTS       = errors.New("No recipients are configured")
 	ERR_BAD_RECIPIENT_EMAIL = errors.New("Recipient email address appears to be invalid")
-	ERR_TEMPLATE_NOT_EXIST  = errors.New("Configured mesage template cannot be found")
-
-	/*
-		ERR_BAD_METHOD                  = errors.New("method is not acceptable")
-		ERR_BAD_URL                     = errors.New("url is appears to be invalid")
-		ERR_NO_BODY                     = errors.New("method requires requestBody")
-		ERR_NO_TRIGGER                  = errors.New("No triggers defined in the hook")
-		ERR_BAD_STATUS_TRIGGER          = errors.New("Trigger set on status is not recognised")
-		ERR_NO_EXECUTING_STATUS_TRIGGER = errors.New("Can not trigger on status 'executing'")
-		ERR_NOT_HTTPS                   = errors.New("url is not secure (no HTTPS)")
-		ERR_COULD_NOT_PARSE_BODY        = errors.New("Problem parsing request body, check included variables")
-
-	*/
+	ERR_TEMPLATE_NOT_EXIST  = errors.New("Configured message template cannot be found")
+	ERR_MULTIPLE_SCOPES     = errors.New("Multiple Scopes found")
 )
 
 // ApprovalsConfig is a representation of the parsed YAML approvals.yaml configuration file
@@ -114,6 +103,41 @@ func ValidateConfig() error {
 		}
 
 		// if scope is set we need to further validate that
+		scope := config[i].Scope
+		if scope != (Scope{}) {
+			var set bool
+			if scope.Group != "" {
+				set = true
+			}
+
+			if scope.Cloud != "" {
+				if set {
+					return ERR_MULTIPLE_SCOPES
+				}
+				set = true
+			}
+
+			if scope.User != "" {
+				if set {
+					return ERR_MULTIPLE_SCOPES
+				}
+				set = true
+			}
+
+			if scope.Role != "" {
+				if set {
+					return ERR_MULTIPLE_SCOPES
+				}
+				set = true
+			}
+
+			if scope.Network != "" {
+				if set {
+					return ERR_MULTIPLE_SCOPES
+				}
+				set = true
+			}
+		}
 	}
 
 	return nil
