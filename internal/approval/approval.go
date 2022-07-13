@@ -2,10 +2,14 @@ package approval
 
 import (
 	"errors"
+	"fmt"
 	_ "fmt"
 	"io/ioutil"
 	"net/mail"
 	_ "net/url"
+	"os"
+
+	"github.com/spoonboy-io/link/internal"
 
 	_ "github.com/spoonboy-io/link/internal"
 
@@ -85,11 +89,17 @@ func ValidateConfig() error {
 		}
 
 		// check has action
-		if !config[i].OnProvision && !config[i].OnDelete && config[i].OnReconfigure {
+		if !config[i].OnProvision && !config[i].OnDelete && !config[i].OnReconfigure {
 			return ERR_NO_ACTION
 		}
 
-		// TODO if template configured check it exists
+		// if template configured check it exists
+		if config[i].TemplateFile != "" {
+			tmplFile := fmt.Sprintf("%s/%s", internal.TEMPLATE_FOLDER, config[i].TemplateFile)
+			if _, err := os.Stat(tmplFile); errors.Is(err, os.ErrNotExist) {
+				return ERR_TEMPLATE_NOT_EXIST
+			}
+		}
 
 		// check at least one recipient
 		if len(config[i].RecipientList) == 0 {
@@ -103,6 +113,7 @@ func ValidateConfig() error {
 			}
 		}
 
+		// if scope is set we need to further validate that
 	}
 
 	return nil

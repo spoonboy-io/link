@@ -1,9 +1,14 @@
 package approval
 
 import (
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/spoonboy-io/link/internal"
 )
 
 var testYamlFile = "test_approvals.yaml"
@@ -37,6 +42,27 @@ func writeTestYamlFile(t *testing.T) {
 func removeTestYamlFile(t *testing.T) {
 	if err := os.Remove(testYamlFile); err != nil {
 		t.Fatal("Could not remove test yaml file")
+	}
+}
+
+func makeTestTemplate(t *testing.T) {
+	templatesPath := filepath.Join(".", internal.TEMPLATE_FOLDER)
+	if err := os.MkdirAll(templatesPath, os.ModePerm); err != nil {
+		t.Fatal("Problem checking/creating test template folder", err)
+	}
+
+	testTemplate := fmt.Sprintf("%s/test.html", internal.TEMPLATE_FOLDER)
+	if _, err := os.Stat(testTemplate); errors.Is(err, os.ErrNotExist) {
+		if err := os.WriteFile(testTemplate, []byte(internal.DefaultTemplate), 0644); err != nil {
+			t.Fatal("Problem creating the test email template", err)
+		}
+	}
+}
+
+func removeTestTemplate(t *testing.T) {
+	templatesPath := filepath.Join(".", internal.TEMPLATE_FOLDER)
+	if err := os.RemoveAll(templatesPath); err != nil {
+		t.Fatal("Problem removing template folder", err)
 	}
 }
 
@@ -80,4 +106,52 @@ func TestReadAndParseConfig(t *testing.T) {
 
 	// clean up
 	removeTestYamlFile(t)
+}
+
+func TestValidateConfig(t *testing.T) {
+
+	makeTestTemplate(t)
+
+	testCases := []struct {
+		name    string
+		config  ApprovalsConfig
+		wantErr error
+	}{
+		{
+			name: "all good, should pass",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						OnProvision:   true,
+						RecipientList: []string{"test@test.com"},
+						TemplateFile:  "test.html",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	/*
+		OnDelete       bool     `yaml:"onDelete"`
+		OnReconfigure  bool     `yaml:"onReconfigure"`
+		LinkedApproval bool     `yaml:"linkedApproval"`
+		RecipientList  []string `yaml:"recipientList"`
+		Scope          Scope    `yaml:"scope"`
+	*/
+
+	for _, tc := range testCases {
+
+		t.Run(tc.name, func(t *testing.T) {
+			// set the package config
+			config = tc.config
+			gotErr := ValidateConfig()
+			if gotErr != tc.wantErr {
+				t.Errorf("wanted %v got %v", tc.wantErr, gotErr)
+			}
+		})
+	}
+
+	removeTestTemplate(t)
 }
