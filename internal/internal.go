@@ -57,7 +57,7 @@ var (
 )
 
 // LoadConfig loads the application configuration file
-func (a *App) LoadConfig(configFile string) error {
+func (*App) LoadConfig(configFile string) error {
 	err := godotenv.Load(configFile)
 	if err != nil {
 		return ERR_FAILED_READ_CONFIG

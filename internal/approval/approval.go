@@ -3,15 +3,11 @@ package approval
 import (
 	"errors"
 	"fmt"
-	_ "fmt"
 	"io/ioutil"
 	"net/mail"
-	_ "net/url"
 	"os"
 
 	"github.com/spoonboy-io/link/internal"
-
-	_ "github.com/spoonboy-io/link/internal"
 
 	"gopkg.in/yaml.v2"
 )
