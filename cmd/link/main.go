@@ -1,26 +1,46 @@
 package main
 
+/*
+
+broadly this is what we need to build:-
+
+configuration file & consumer, for connecting to API (path & key) and configuration for SMTP server - DONE
+configuration  file (YAML) and consumer, for the approval routing logic - DONE
+SMTP email routine with template for limited branding/customisation, including actions for view/approve/deny
+HTTP server to handle the requests from the emails, (approve/deny/request more info) - with TLS. Providing detail and confirmation
+client to poll the morpheus api for approvals, and make approve POST requests when constraints satisfied
+state - we need to manage the approval state, while it is out for approval
+
+*/
+
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
+	"path/filepath"
+
+	"github.com/spoonboy-io/koan"
 	"github.com/spoonboy-io/link/internal"
 	"github.com/spoonboy-io/link/internal/approval"
 	"github.com/spoonboy-io/link/internal/certificate"
-	"os"
-	"path/filepath"
-	"github.com/joho/godotenv"
-	"github.com/spoonboy-io/koan"
+	"github.com/spoonboy-io/reprise"
 )
 
 var (
 	version   = "Development build"
-	goversion =	"Unknown"
+	goversion = "Unknown"
 )
 
 var logger *koan.Logger
+var app *internal.App
 
 func init() {
 	logger = &koan.Logger{}
+	app = &internal.App{
+		Logger: logger,
+	}
 
 	// check/create data folder
 	templatesPath := filepath.Join(".", internal.TEMPLATE_FOLDER)
@@ -54,38 +74,70 @@ func init() {
 	}
 
 	// load application config
-	err := godotenv.Load(internal.APP_CONFIG)
-	if err != nil {
-		logger.FatalError("Failed to read application configuration file", err)
+	if err := app.LoadConfig(internal.APP_CONFIG); err != nil {
+		logger.FatalError("Failed to load application", err)
+	}
+
+	// validate it here rather than later
+	if err := app.ValidateConfig(); err != nil {
+		logger.FatalError("Application configuration is not sufficient", err)
 	}
 
 	// load approval YAML and validate we can use
-	err = approval.ReadAndParseConfig(internal.APPROVAL_CONFIG)
-	if err != nil {
+	if err := approval.ReadAndParseConfig(internal.APPROVAL_CONFIG); err != nil {
 		logger.FatalError("Failed to read approval configuration file", err)
 	}
 
-	err = approval.ValidateConfig()
-	if err != nil {
+	if err := approval.ValidateConfig(); err != nil {
 		logger.FatalError("Failed to validate approval configuration", err)
 	}
-
 }
 
-func main(){
-	fmt.Println("Hello World!")
+// Shutdown runs on SIGINT and panic
+func Shutdown(cancel context.CancelFunc) {
+	fmt.Println("") // break after ^C
+	logger.Warn("Application terminated")
+
+	// cancel the context so we can stop our http client and current requests
+	logger.Info("Cancelling HTTP client requests")
+	cancel()
+
+	logger.Info("Saving application state")
+
+	// TODO
 }
 
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	app.Ctx = ctx
+	defer Shutdown(cancel)
 
-/*
+	// write console banner
+	reprise.WriteSimple(&reprise.Banner{
+		Name:         "Link",
+		Description:  "Multi-person approval notifications for Morpheus",
+		Version:      version,
+		GoVersion:    goversion,
+		WebsiteURL:   "https://spoonboy.io",
+		VcsURL:       "https://github.com/spoonboy-io/link",
+		VcsName:      "Github",
+		EmailAddress: "hello@spoonboy.io",
+	})
 
-broadly this is what we need to build:-
+	// api poller which initiates most of the work
+	go func() {
+		//TODO
 
-configuration file & consumer, for connecting to API (path & key) and configuration for SMTP server
-configuration  file (YAML) and consumer, for the approval routing logic
-SMTP email routine with template for limited branding/customisation, including actions for view/approve/deny
-HTTP server to handle the requests from the emails, (approve/deny/request more info) - with TLS. Providing detail and confirmation
-client to poll the morpheus api for approvals, and make approve POST requests when constraints satisfied
-state - we need to manage the approval state, while it is out for approval
+	}()
 
- */
+	// server to handle
+	go func() {
+		//TODO
+	}()
+
+	// shutdown
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+
+}

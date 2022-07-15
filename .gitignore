@@ -3,5 +3,6 @@
 certs/
 templates/
 internal/approval/misc.go
+internal/server
 config.env
 approvals.yaml
