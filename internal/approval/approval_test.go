@@ -236,6 +236,24 @@ func TestValidateConfig(t *testing.T) {
 			},
 			wantErr: ERR_MULTIPLE_SCOPES,
 		},
+		{
+			name: "multiple scopes, should fail",
+			config: ApprovalsConfig{
+				{
+					ApprovalConfig{
+						Description:   "test approval config 1",
+						TemplateFile:  "test.html",
+						OnProvision:   true,
+						RecipientList: []string{"test@test.com"},
+						Scope: Scope{
+							Cloud: "Azure",
+							Role:  "Admin",
+						},
+					},
+				},
+			},
+			wantErr: ERR_MULTIPLE_SCOPES,
+		},
 	}
 
 	for _, tc := range testCases {
