@@ -17,9 +17,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"time"
+
+	"github.com/spoonboy-io/link/internal/routes"
+
+	"github.com/gorilla/mux"
 
 	"github.com/spoonboy-io/koan"
 	"github.com/spoonboy-io/link/internal"
@@ -130,9 +137,29 @@ func main() {
 
 	}()
 
-	// server to handle
+	// handlers
+	mux := mux.NewRouter()
+
+	handler := &routes.Routes{
+		App: app,
+	}
+
+	mux.HandleFunc(`/`, handler.Home).Methods("GET")
+
+	// start HTTPS server
 	go func() {
-		//TODO
+		hostPort := net.JoinHostPort(internal.SRV_HOST, internal.SRV_PORT)
+		srvTLS := &http.Server{
+			Addr:         hostPort,
+			Handler:      mux,
+			ReadTimeout:  3 * time.Second,
+			WriteTimeout: 5 * time.Second,
+		}
+
+		logger.Info(fmt.Sprintf("Starting HTTPS server on %s", hostPort))
+		if err := srvTLS.ListenAndServeTLS(fmt.Sprintf("%s/cert.pem", internal.TLS_FOLDER), fmt.Sprintf("%s/key.pem", internal.TLS_FOLDER)); err != nil {
+			logger.FatalError("Failed to start HTTPS server", err)
+		}
 	}()
 
 	// shutdown

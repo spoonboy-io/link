@@ -3,6 +3,7 @@ module github.com/spoonboy-io/link
 go 1.17
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
 	github.com/spoonboy-io/koan v0.1.0
 	github.com/spoonboy-io/reprise v0.0.1
