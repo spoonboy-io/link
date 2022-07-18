@@ -12,12 +12,12 @@ type Routes struct {
 	App *internal.App
 }
 
-// Home - there is nothing useful being done here, but could be used for ping check
-func (r *Routes) Home(w http.ResponseWriter, _ *http.Request) {
+// Ping provides an endpoint to check the server is running and responding
+func (r *Routes) Ping(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "text/plain")
 
-	res := "Link is up\n"
+	res := "Hello from Link!\n"
 
 	r.App.Logger.Info("Served GET / request - 200 OK")
 	_, _ = fmt.Fprint(w, res)

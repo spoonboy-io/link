@@ -24,6 +24,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/spoonboy-io/link/internal/morpheus"
+
 	"github.com/spoonboy-io/link/internal/routes"
 
 	"github.com/gorilla/mux"
@@ -133,18 +135,24 @@ func main() {
 
 	// api poller which initiates most of the work
 	go func() {
-		//TODO
-
+		pollInterval := time.NewTicker(time.Duration(app.Config.PollInterval) * time.Second)
+		for range pollInterval.C {
+			if err := morpheus.MakeApprovalCheck(ctx, app); err != nil {
+				logger.Error("Morpheus API request error", err)
+			}
+			lastCheckMsg := fmt.Sprintf("Checking for new Morpheus Approvals at %s", time.Now())
+			logger.Info(lastCheckMsg)
+		}
 	}()
 
 	// handlers
 	mux := mux.NewRouter()
-
 	handler := &routes.Routes{
 		App: app,
 	}
 
-	mux.HandleFunc(`/`, handler.Home).Methods("GET")
+	//mux.HandleFunc(`/`, handler.Ping).Methods("GET")
+	mux.HandleFunc(`/ping`, handler.Ping).Methods("GET")
 
 	// start HTTPS server
 	go func() {
