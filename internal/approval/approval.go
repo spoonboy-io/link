@@ -42,6 +42,7 @@ type ApprovalConfig struct {
 
 // Scope represents the scope configuration options which can be set in the YAML.
 // Default scope is 'global' unless overridden here - by a single setting here
+
 type Scope struct {
 	Group   string `yaml:"group"`
 	Cloud   string `yaml:"cloud"`

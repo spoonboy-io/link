@@ -7,11 +7,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spoonboy-io/link/internal/state"
+
 	"github.com/joho/godotenv"
 	"github.com/spoonboy-io/koan"
 )
 
-// App is provides a wrapper for passing the Config, Context and Logger around as dependencies
+// App is provides a wrapper for passing the Config, Context, Logger & State around as dependencies
 type App struct {
 	Logger *koan.Logger
 	Ctx    context.Context
@@ -24,6 +26,7 @@ type App struct {
 		SmtpUser      string
 		SmtpPassword  string
 	}
+	State *state.State
 }
 
 const (
@@ -32,8 +35,9 @@ const (
 	APPROVAL_CONFIG = "approvals.yaml"
 
 	// server
-	SRV_HOST = ""
-	SRV_PORT = "18652"
+	SRV_HOST      = ""
+	SRV_PORT      = "18652"
+	POLL_INTERVAL = 30
 
 	// email templates
 	TEMPLATE_FOLDER = "templates"
@@ -85,7 +89,7 @@ func (a *App) ValidateConfig() error {
 		return ERR_POLL_INTERVAL_NOT_INT
 	}
 	if pollInt == 0 {
-		pollInt = 30
+		pollInt = POLL_INTERVAL
 	}
 	a.Config.PollInterval = pollInt
 

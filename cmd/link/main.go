@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/spoonboy-io/link/internal/morpheus"
+	"github.com/spoonboy-io/link/internal/state"
 
 	"github.com/spoonboy-io/link/internal/routes"
 
@@ -43,12 +44,15 @@ var (
 )
 
 var logger *koan.Logger
+var st *state.State
 var app *internal.App
 
 func init() {
 	logger = &koan.Logger{}
+	st = &state.State{}
 	app = &internal.App{
 		Logger: logger,
+		State:  st,
 	}
 
 	// check/create data folder
@@ -112,8 +116,9 @@ func Shutdown(cancel context.CancelFunc) {
 	cancel()
 
 	logger.Info("Saving application state")
-
-	// TODO
+	if err := st.CreateAndWrite(); err != nil {
+		logger.Error("Failed to save application state", err)
+	}
 }
 
 func main() {
@@ -137,7 +142,7 @@ func main() {
 	go func() {
 		pollInterval := time.NewTicker(time.Duration(app.Config.PollInterval) * time.Second)
 		for range pollInterval.C {
-			if err := morpheus.MakeApprovalCheck(ctx, app); err != nil {
+			if err := morpheus.CheckNewApprovals(ctx, app); err != nil {
 				logger.Error("Morpheus API request error", err)
 			}
 			lastCheckMsg := fmt.Sprintf("Checking for new Morpheus Approvals at %s", time.Now())
