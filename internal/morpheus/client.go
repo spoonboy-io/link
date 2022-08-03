@@ -70,13 +70,13 @@ func CheckNewApprovals(ctx context.Context, app *internal.App) ([]approval.Appro
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return approvalsRequested, fmt.Errorf("Could not read response body", err)
+		return approvalsRequested, fmt.Errorf("Could not read response body %v", err)
 	}
 
 	// capture to struct
 	approvalsRes := ApprovalsResponse{}
 	if err := json.Unmarshal(body, &approvalsRes); err != nil {
-		return approvalsRequested, fmt.Errorf("Could not unmarshal response body", err)
+		return approvalsRequested, fmt.Errorf("Could not unmarshal response body %v", err)
 	}
 
 	// TODO IN-PROGRESS
