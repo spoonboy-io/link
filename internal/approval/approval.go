@@ -3,7 +3,6 @@ package approval
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/mail"
 	"os"
 	"time"
@@ -71,7 +70,7 @@ type Item struct {
 // ReadAndParseConfig reads the contents of the YAML approvals config filer
 // and parses it to a map of Approval structs
 func ReadAndParseConfig(cfgFile string) error {
-	yamlConfig, err := ioutil.ReadFile(cfgFile)
+	yamlConfig, err := os.ReadFile(cfgFile)
 	if err != nil {
 		return err
 	}

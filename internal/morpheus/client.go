@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/spoonboy-io/link/internal"
@@ -38,7 +38,7 @@ func CheckNewApprovals(ctx context.Context, app *internal.App) ([]approval.Appro
 	// the api does not support an index in this call, so we have to set a high max to get everything
 	// and then process it
 	requestURI := fmt.Sprintf("%s/api/approvals?max=10000", app.Config.MorpheusHost)
-	req, err := http.NewRequest("GET", requestURI, nil)
+	req, err := http.NewRequest("GET", requestURI, http.NoBody)
 	if err != nil {
 		return approvalsRequested, err
 	}
@@ -51,7 +51,10 @@ func CheckNewApprovals(ctx context.Context, app *internal.App) ([]approval.Appro
 	// going to ignore TLS errors, which we may get from a morpheus appliance running
 	// self-signed certificates
 	tConf := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS12,
+		},
 	}
 	client := &http.Client{
 		Transport: tConf,
@@ -68,7 +71,7 @@ func CheckNewApprovals(ctx context.Context, app *internal.App) ([]approval.Appro
 		return approvalsRequested, fmt.Errorf("Bad response received from API (%d)", res.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return approvalsRequested, fmt.Errorf("Could not read response body %v", err)
 	}
@@ -123,7 +126,7 @@ func GetApproval(ctx context.Context, approval *approval.Approval, app *internal
 
 	// form the request
 	requestURI := fmt.Sprintf("%s/api/approvals/%d", app.Config.MorpheusHost, approval.Id)
-	req, err := http.NewRequest("GET", requestURI, nil)
+	req, err := http.NewRequest("GET", requestURI, http.NoBody)
 	if err != nil {
 		return approvalRes.Approval, err
 	}
@@ -136,7 +139,10 @@ func GetApproval(ctx context.Context, approval *approval.Approval, app *internal
 	// going to ignore TLS errors, which we may get from a morpheus appliance running
 	// self-signed certificates
 	tConf := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS12,
+		},
 	}
 	client := &http.Client{
 		Transport: tConf,
@@ -153,7 +159,7 @@ func GetApproval(ctx context.Context, approval *approval.Approval, app *internal
 		return approvalRes.Approval, fmt.Errorf("Bad response received from API (%d)", res.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return approvalRes.Approval, err
 	}
