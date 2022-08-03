@@ -142,11 +142,15 @@ func main() {
 	go func() {
 		pollInterval := time.NewTicker(time.Duration(app.Config.PollInterval) * time.Second)
 		for range pollInterval.C {
-			if err := morpheus.CheckNewApprovals(ctx, app); err != nil {
+			newApprovals, err := morpheus.CheckNewApprovals(ctx, app)
+			if err != nil {
 				logger.Error("Morpheus API request error", err)
 			}
 			lastCheckMsg := fmt.Sprintf("Checking for new Morpheus Approvals at %s", time.Now())
 			logger.Info(lastCheckMsg)
+
+			// match against the configuration
+			_ = newApprovals // TODO
 		}
 	}()
 

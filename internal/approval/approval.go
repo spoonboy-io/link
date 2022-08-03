@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/mail"
 	"os"
+	"time"
 
 	"github.com/spoonboy-io/link/internal"
 
@@ -49,6 +50,22 @@ type Scope struct {
 	User    string `yaml:"user"`
 	Role    string `yaml:"role"`
 	Network string `yaml:"network"`
+}
+
+// hold an approval
+type Approval struct {
+	Id          int       `json:"id"`
+	Name        string    `json:"name"`
+	RequestType string    `json:"requestType"`
+	Status      string    `json:"status"`
+	DateCreated time.Time `json:"datedCreated"`
+	RequestBy   string    `json:"requestBy"`
+	Items       []Item    `json:"approvalItems"`
+	Scope       Scope     `json:"scope"`
+}
+
+type Item struct {
+	Id int `json:"id"`
 }
 
 // ReadAndParseConfig reads the contents of the YAML approvals config filer
